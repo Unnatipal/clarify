@@ -1,8 +1,13 @@
 package com.clarify.doubts.init;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import com.clarify.doubts.model.Doubt;
+import com.clarify.doubts.model.DoubtDifficulty;
 import com.clarify.doubts.model.DoubtStatus;
 import com.clarify.doubts.model.Reply;
 import com.clarify.doubts.model.AppUser;
@@ -137,16 +142,48 @@ public class DataLoader {
       return doubts.save(created);
     });
 
+    if (doubt.getAuthorCredential() == null || doubt.getAuthorCredential().isBlank()) {
+      doubt.setAuthorCredential(authorName);
+    }
+    if (doubt.getDifficulty() == null) {
+      doubt.setDifficulty(inferDifficulty(title, description));
+    }
+    if (doubt.getTopics() == null || doubt.getTopics().isEmpty()) {
+      doubt.setTopics(inferTopics(title, description));
+    }
+    if (doubt.getBountyPoints() == null) {
+      doubt.setBountyPoints(suggestBountyPoints(doubt.getDifficulty()));
+    }
+    doubt = doubts.save(doubt);
+
     if (replySeeds != null && replySeeds.length > 0 && replies.countByDoubtId(doubt.getId()) == 0) {
+      Reply firstReply = null;
       for (String[] replySeed : replySeeds) {
         Reply reply = new Reply();
         reply.setDoubt(doubt);
         reply.setAuthorName(replySeed[0]);
         reply.setMessage(replySeed[1]);
         replies.save(reply);
+        if (firstReply == null) firstReply = reply;
+      }
+      if (firstReply != null) {
+        firstReply.setAccepted(true);
+        firstReply.setBountyAwardedPoints(Math.max(doubt.getBountyPoints(), 0));
+        replies.save(firstReply);
       }
       doubt.setStatus(DoubtStatus.SOLVED);
       doubts.save(doubt);
+    }
+
+    if (doubt.getStatus() == DoubtStatus.SOLVED) {
+      List<Reply> existingReplies = replies.findByDoubtId(doubt.getId());
+      boolean hasAccepted = existingReplies.stream().anyMatch(Reply::isAccepted);
+      if (!hasAccepted && !existingReplies.isEmpty()) {
+        Reply first = existingReplies.get(0);
+        first.setAccepted(true);
+        first.setBountyAwardedPoints(Math.max(doubt.getBountyPoints(), 0));
+        replies.save(first);
+      }
     }
   }
 
@@ -293,5 +330,55 @@ public class DataLoader {
         {"user", "Objects live in heap, method frames/local variables in stack, class metadata in metaspace."}
       }
     );
+  }
+
+  private DoubtDifficulty inferDifficulty(String title, String description) {
+    String text = (title + " " + description).toLowerCase();
+    if (text.contains("beginner") || text.contains("basic") || text.contains("simple")) {
+      return DoubtDifficulty.EASY;
+    }
+    if (
+      text.contains("optimize") ||
+      text.contains("performance") ||
+      text.contains("concurrency") ||
+      text.contains("security") ||
+      text.contains("architecture") ||
+      text.contains("jwt") ||
+      text.contains("normalization")
+    ) {
+      return DoubtDifficulty.HARD;
+    }
+    return DoubtDifficulty.MEDIUM;
+  }
+
+  private List<String> inferTopics(String title, String description) {
+    String text = (title + " " + description).toLowerCase();
+    Set<String> tags = new LinkedHashSet<>();
+    if (text.contains("react")) tags.add("React");
+    if (text.contains("javascript") || text.contains("js")) tags.add("JavaScript");
+    if (text.contains("java")) tags.add("Java");
+    if (text.contains("spring")) tags.add("Spring");
+    if (text.contains("sql") || text.contains("mysql") || text.contains("database")) tags.add("SQL");
+    if (text.contains("css")) tags.add("CSS");
+    if (text.contains("api")) tags.add("API");
+    if (text.contains("security") || text.contains("auth")) tags.add("Security");
+    if (text.contains("dsa") || text.contains("algorithm") || text.contains("complexity")) tags.add("DSA");
+    if (text.contains("frontend")) tags.add("Frontend");
+    if (text.contains("backend")) tags.add("Backend");
+    if (text.contains("git")) tags.add("Git");
+    if (tags.isEmpty()) tags.add("General");
+
+    List<String> result = new ArrayList<>();
+    for (String tag : tags) {
+      result.add(tag);
+      if (result.size() >= 4) break;
+    }
+    return result;
+  }
+
+  private int suggestBountyPoints(DoubtDifficulty difficulty) {
+    if (difficulty == DoubtDifficulty.EASY) return 25;
+    if (difficulty == DoubtDifficulty.HARD) return 100;
+    return 50;
   }
 }

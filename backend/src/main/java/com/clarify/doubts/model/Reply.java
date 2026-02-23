@@ -35,6 +35,10 @@ public class Reply {
   @Column(length = 5000)
   private String message;
 
+  private boolean accepted = false;
+
+  private Integer bountyAwardedPoints = 0;
+
   private Instant createdAt = Instant.now();
 
   public Long getId() {
@@ -68,6 +72,22 @@ public class Reply {
 
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  public boolean isAccepted() {
+    return accepted;
+  }
+
+  public void setAccepted(boolean accepted) {
+    this.accepted = accepted;
+  }
+
+  public Integer getBountyAwardedPoints() {
+    return bountyAwardedPoints;
+  }
+
+  public void setBountyAwardedPoints(Integer bountyAwardedPoints) {
+    this.bountyAwardedPoints = bountyAwardedPoints;
   }
 
   public Instant getCreatedAt() {

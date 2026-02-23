@@ -8,14 +8,18 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -35,6 +39,20 @@ public class Doubt {
   @NotBlank
   @Size(max = 100)
   private String authorName;
+
+  @Size(max = 100)
+  private String authorCredential;
+
+  @Enumerated(EnumType.STRING)
+  private DoubtDifficulty difficulty = DoubtDifficulty.MEDIUM;
+
+  @ElementCollection
+  @CollectionTable(name = "doubt_topics", joinColumns = @JoinColumn(name = "doubt_id"))
+  @Column(name = "topic", length = 60)
+  private List<String> topics = new ArrayList<>();
+
+  @PositiveOrZero
+  private Integer bountyPoints = 0;
 
   @Enumerated(EnumType.STRING)
   private DoubtStatus status = DoubtStatus.OPEN;
@@ -75,6 +93,38 @@ public class Doubt {
 
   public void setAuthorName(String authorName) {
     this.authorName = authorName;
+  }
+
+  public String getAuthorCredential() {
+    return authorCredential;
+  }
+
+  public void setAuthorCredential(String authorCredential) {
+    this.authorCredential = authorCredential;
+  }
+
+  public DoubtDifficulty getDifficulty() {
+    return difficulty;
+  }
+
+  public void setDifficulty(DoubtDifficulty difficulty) {
+    this.difficulty = difficulty;
+  }
+
+  public List<String> getTopics() {
+    return topics;
+  }
+
+  public void setTopics(List<String> topics) {
+    this.topics = topics;
+  }
+
+  public Integer getBountyPoints() {
+    return bountyPoints;
+  }
+
+  public void setBountyPoints(Integer bountyPoints) {
+    this.bountyPoints = bountyPoints;
   }
 
   public DoubtStatus getStatus() {
