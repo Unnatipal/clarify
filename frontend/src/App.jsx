@@ -698,8 +698,19 @@ function DoubtApp() {
   const handleCreateDoubt = async (d) => {
     try {
       setError('')
-      await createDoubt(d)
-      await refreshDoubts()
+      const created = await createDoubt(d)
+      try {
+        await refreshDoubts()
+      } catch {
+        if (created && created.id) {
+          setDoubts(prev => {
+            const exists = prev.some(item => String(item.id) === String(created.id))
+            if (exists) return prev
+            return [created, ...prev]
+          })
+          setError('')
+        }
+      }
     } catch (err) {
       const message = err?.message || 'Failed to create doubt'
       if (message.includes('401')) {

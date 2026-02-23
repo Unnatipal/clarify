@@ -191,7 +191,7 @@ export async function createDoubt(d) {
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', ...authHeaders() },
       body: JSON.stringify(payload)
     })
-    if (res.status !== 415) return getJsonOrThrow(res)
+    if (res.status !== 415) return await getJsonOrThrow(res)
 
     // Fallback for backend variants that accept multipart/form-data instead of JSON.
     const fd = new FormData()
@@ -209,7 +209,7 @@ export async function createDoubt(d) {
       headers: { 'Accept': 'application/json', ...authHeaders() },
       body: fd
     })
-    if (multipartRes.status !== 415) return getJsonOrThrow(multipartRes)
+    if (multipartRes.status !== 415) return await getJsonOrThrow(multipartRes)
 
     // Final fallback for backends that expect x-www-form-urlencoded.
     const urlParams = new URLSearchParams()
@@ -231,7 +231,7 @@ export async function createDoubt(d) {
       },
       body: urlParams.toString()
     })
-    if (formRes.status !== 415) return getJsonOrThrow(formRes)
+    if (formRes.status !== 415) return await getJsonOrThrow(formRes)
 
     // Additional fallback: parameters in query string with empty body.
     const query = new URLSearchParams(urlParams)
@@ -239,7 +239,7 @@ export async function createDoubt(d) {
       method: 'POST',
       headers: { 'Accept': 'application/json', ...authHeaders() }
     })
-    if (queryRes.status !== 415) return getJsonOrThrow(queryRes)
+    if (queryRes.status !== 415) return await getJsonOrThrow(queryRes)
 
     // Last fallback: plain text JSON payload for custom parsers.
     const plainRes = await fetch(`${BASE_URL}/doubts`, {
@@ -247,7 +247,7 @@ export async function createDoubt(d) {
       headers: { 'Content-Type': 'text/plain;charset=UTF-8', 'Accept': 'application/json', ...authHeaders() },
       body: JSON.stringify(payload)
     })
-    return getJsonOrThrow(plainRes)
+    return await getJsonOrThrow(plainRes)
   } catch (err) {
     const msg = String(err?.message || '')
     if (/401|unauthorized/i.test(msg)) throw err
