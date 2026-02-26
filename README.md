@@ -37,7 +37,6 @@ sh mvnw spring-boot:run
 ```
 
 Backend runs on:
-- `http://localhost:8081`
 
 ### 2) Start frontend
 
@@ -50,7 +49,6 @@ npm run dev
 ```
 
 Frontend runs on:
-- `http://localhost:5173`
 
 ## Default Demo Credentials
 
@@ -76,7 +74,6 @@ sh mvnw -DskipTests compile
 ## Notes
 
 - Frontend API base URL is currently hardcoded to:
-  - `frontend/src/api.js` -> `http://localhost:8081`
 - If backend is down, some actions use local fallback storage in browser (`localStorage`) for doubts/replies.
 
 ## Troubleshooting
